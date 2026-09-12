@@ -1,0 +1,49 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+# El notebook del entregable SÍ se versiona con sus salidas:
+# el profesor debe poder leer los resultados sin ejecutar nada.
+# Los notebooks de trabajo sucio, no.
+notebooks/scratch*.ipynb
+notebooks/*ejecutado*.ipynb
+
+# --- Datos y modelos (se descargan, no se versionan) ---
+data/
+*.csv
+*.tsv
+*.parquet
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# --- Cachés de librerías ---
+.cache/
+cache/
+~/.cache/huggingface/
+lightning_logs/
+tb_logs/
+runs/
+wandb/
+mlruns/
+
+# --- Resultados: se conservan figuras y métricas ligeras ---
+results/**/*.pkl
+results/**/*.joblib
+
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editores ---
+.vscode/
+.idea/
+*.swp

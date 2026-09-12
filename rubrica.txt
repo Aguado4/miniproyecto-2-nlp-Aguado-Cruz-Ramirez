@@ -1,0 +1,30 @@
+Criterios de calificación
+Rúbrica
+Jupyter Notebook Completo	
+Deficiente: El entregable no muestra un desarrollo coherente o completo de la actividad. Se percibe que hacen falta celdas de código o comentarios que detallen el proceso o conclusiones sobre los resultados.
+0.25 puntos
+Estándar: El entregable contiene celdas de código y algunos comentarios, aunque no detalle el procedimiento o no realiza conclusiones sobre los resultados.
+0.5 puntos
+Muy bien: El entregable cuenta con celdas de código que implemente el modelo/programa solicitado además de los respectivos comentarios detallando el procedimiento. Finalmente aporta conclusiones sobre los resultados obtenidos.
+1 puntos
+Reproducibilidad de los resultados	
+Deficiente: No es posible reproducir los resultados del Notebook, la ejecución de la mayoría de las celdas falla o no es posible correrlas.
+0.5 puntos
+Estándar: La mayoría de las celdas del notebook corren y se pueden reproducir los resultados esperados, aunque existen algunas de ellas que no corren correctamente o entregan resultados diferentes de los presentados.
+1 puntos
+Muy bien: Todas las celdas de código ejecutan correctamente y se pueden obtener los resultados originales presentados al correr el notebook desde cero.
+2 puntos
+Implementación de Transformers en su forma original y comparación frente a un modelo simple	
+Deficiente: Se evidencia una implementación incompleta o un mal manejo de los elementos que lo componen, como una mala preparación en los datos. Además de esto, se observan varias imprecisiones en el análisis presentado o de plano no proporciona un análisis sobre los resultados.
+0.5 puntos
+Estándar: Se evidencia la implementación del modelo de Transformers original, además de un manejo adecuado de sus componentes para llevar a cabo la tarea, sin embargo, no presenta evidencia clara de una comparación respecto a un modelo más simple, o bien no evidencia conclusiones sobre los resultados.
+1 puntos
+Muy bien: Se evidencia la implementación del modelo de Transformers original, así como su aplicación en una tarea especifica. Además de ello se evidencia una comparación del rendimiento frente a un modelo más simple de tipo MLP. Finalmente se evidencian conclusiones sobre los resultados.
+2 puntos
+Innovación	
+Deficiente: No se evidencia innovación sustancial con respecto al notebook de ejemplo (No añade nada o muy poco nuevo)
+0.5 puntos
+Estándar: Se evidencian algunas variaciones de autoría propia al trabajo con respecto al notebook de ejemplo que aportan al propósito del caso en cuestión.
+1 puntos
+Muy bien: Se evidencian varias aportaciones valiosas de autoría propia al trabajo respecto al notebook de ejemplo. No solo aportan al propósito del caso, sino que potencian el trabajo más allá de lo básico
+2 puntos

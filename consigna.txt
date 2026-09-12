@@ -1,0 +1,13 @@
+En esta actividad se busca que el estudiante ponga en práctica los conceptos y técnicas vistos en el contenido del curso, en particular para que se familiarice con el entorno de trabajo y la dinámica de entregables que será la misma para el resto del curso.
+
+
+Se solicita que el estudiante/grupo cree un repositorio en GitHub para que almacene allí todos los entregables del curso.
+
+Basandose en los notebooks de la sesión en el repositorio, elaborar un caso propio como un nuevo notebook.
+No utilizar los mismos ejemplos de los notebooks guía, debes cambiar los documentos o datos de entrada, observar los resultados y comentar sobre estos.
+Se espera que agregues comentarios y que tengas una narrativa sobre los hallazgos para tu caso personal.
+Se valora positivamente ir más allá de lo que el ejemplo muestra, por ejemplo añadir plots, otro tipo de análisis, etc.
+Incluye un buen EDA sobre tu caso.
+Elabora muy bien el problema que estás aborando, demuestra que lo entiendes y por que tu propuesta es buena para abordarlo.
+Experimenta más allá del ejemplo básico, prueba diferentes técnicas, arquitecturas, parámetros, compara resultados y analizalos.
+Se valora significativamente abordar casos que impliquen incluir técnicas más allá de las vistas en clase, hacer demos, combinar con otro tipo de técnicas o casos, etc.

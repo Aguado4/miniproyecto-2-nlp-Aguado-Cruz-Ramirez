@@ -1,0 +1,46 @@
+# Miniproyecto 2 — NLP
+# Instalación local:  pip install -r requirements.txt
+#                     python -m spacy download es_core_news_lg
+#
+# En Colab la mayoría ya viene preinstalado; el notebook instala solo lo que falta.
+# Versiones con cota inferior, no fijadas, para no romper el entorno de Colab.
+
+# --- Datos y cómputo numérico ---
+numpy>=1.26
+pandas>=2.2
+scipy>=1.13
+scikit-learn>=1.5
+
+# --- Corpus ---
+datasets>=2.19
+huggingface-hub>=0.23
+
+# --- Deep learning ---
+# El Transformer se implementa a mano sobre torch (sin nn.TransformerEncoderLayer
+# ni nn.MultiheadAttention). Ver docs/DECISIONS.md §D-208.
+torch>=2.2
+
+# --- Tokenizador BPE (sección 4.1) ---
+# Se usan SOLO para entrenar el tokenizador subword, siguiendo el notebook de la Sesión 2.
+# Ninguna capa del modelo sale de aquí.
+transformers>=4.41
+tokenizers>=0.19
+
+# --- Solo para el EDA §3.7 (cobertura de vocabulario) ---
+# El modelo de vectores se descarga aparte y pesa ~570 MB:
+#   python -m spacy download es_core_news_lg
+# No alimenta ningún modelo de esta entrega; se conserva porque el EDA se reproduce
+# íntegro por indicación del profesor (docs/DECISIONS.md §D-201).
+spacy>=3.7
+
+# --- Corrección de codificación (mojibake), sección 3.1 ---
+ftfy>=6.2
+
+# --- Visualización ---
+matplotlib>=3.8
+seaborn>=0.13
+
+# --- Entorno ---
+jupyterlab>=4.0
+ipywidgets>=8.1
+tqdm>=4.66
