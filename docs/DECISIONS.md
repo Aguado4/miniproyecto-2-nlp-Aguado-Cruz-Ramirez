@@ -92,31 +92,28 @@ en vez de afirmaciones.
 
 ## D-203 · Tokenización BPE en lugar del vocabulario por palabras del Miniproyecto 1
 
-**Estado:** aceptada · 2026-09-12
+**Estado:** revertida · 2026-09-12 → revertida 2026-09-15. Ver **D-214**.
 
-**Contexto.** El Miniproyecto 1 usaba un vocabulario de 30.000 palabras completas con corte
-por frecuencia. Su EDA §3.7 midió que el 26 % de las palabras distintas no tiene vector
-preentrenado, y que lo que falta son sobre todo nombres propios (destinos, hoteles) y
-variantes ortográficas con y sin tilde. Con vocabulario por palabras, todo eso colapsa en un
-único `[UNK]`.
+**Contexto (original).** El Miniproyecto 1 usaba un vocabulario de 30.000 palabras completas
+con corte por frecuencia. Su EDA §3.7 midió que el 26 % de las palabras **distintas** no
+tiene vector preentrenado, y que lo que falta son sobre todo nombres propios (destinos,
+hoteles) y variantes ortográficas con y sin tilde.
 
-**Decisión.** Entrenar un tokenizador ByteLevel BPE sobre el corpus, como hace el notebook
-de la Sesión 2, con tamaño de vocabulario `CFG["vocab_bpe"]` (20.000 con GPU).
+**Decisión (original, revertida).** Entrenar un tokenizador ByteLevel BPE sobre el corpus,
+como hace el notebook de la Sesión 2, y usarlo como preprocesamiento **base** de todo el
+notebook.
 
-**Alternativas descartadas.**
-- *Reutilizar el vocabulario por palabras del Miniproyecto 1* para maximizar la
-  comparabilidad: se descarta porque el guía de esta sesión usa explícitamente subword, y
-  porque el EDA ya había identificado el problema de cobertura que BPE resuelve. La
-  comparabilidad se preserva donde importa —misma submuestra, mismo split, mismas
-  métricas— y la diferencia de tokenización se declara al leer la tabla de §13.
-- *Los 50.000 tokens del guía*: ese número está pensado para un corpus de noticias. Sobre
-  40.000 reseñas cortas dejaría miles de embeddings vistos dos o tres veces en todo el
-  entrenamiento, que es una forma silenciosa de desperdiciar parámetros.
+**Por qué se revirtió.** Dos razones, desarrolladas en D-214:
 
-**Riesgo abierto.** Cambiar de tokenización a la vez que de arquitectura introduce dos
-variables. Se mitiga midiendo la tasa de `[UNK]` de ambos esquemas en §4.1, y dejando la
-comparación BPE vs. palabras como posible fila adicional de la ablación de §8 si el
-presupuesto de tiempo lo permite.
+1. El 26 % es cobertura por **tipos** (palabras distintas). La cobertura que de verdad
+   importa —por **apariciones**— ya estaba medida en el propio Miniproyecto 1 y es 98,5 %:
+   el vocabulario de 30.000 palabras deja fuera solo el 1,5 % de las palabras que un modelo
+   realmente lee en el test. El argumento de D-203 sobreestimaba el problema.
+2. Usar BPE como base metía **dos variables a la vez** en la Sección 13 (comparación contra
+   los modelos del Miniproyecto 1): tokenización y arquitectura. Eso es precisamente lo que
+   el «riesgo abierto» de esta entrada ya advertía y no llegó a resolver.
+
+Se conserva esta entrada por trazabilidad; no se borra una decisión, se corrige.
 
 ---
 
@@ -172,39 +169,55 @@ posiciones de relleno contaminen la representación final de la secuencia.
 
 ---
 
-## D-206 · `MAX_LEN` recalculado sobre tokens BPE
+## D-206 · `MAX_LEN` heredado del Miniproyecto 1, releído bajo un costo distinto
 
-**Estado:** aceptada · 2026-09-12
+**Estado:** revisada · 2026-09-12 → revisada 2026-09-15 (ver D-214: ya no hay tokens BPE
+que recalcular; `MAX_LEN` se hereda igual que el resto de §4).
 
-**Contexto.** El Miniproyecto 1 fijó `MAX_LEN = 150` como percentil 95 en **palabras**
-(MP1 §D-005). BPE produce más unidades que palabras, porque parte los términos raros.
+**Contexto.** El Miniproyecto 1 fijó `MAX_LEN = 150` como percentil 95 en palabras
+(MP1 §D-005), con un vocabulario que aquí también se hereda íntegro (D-214). El número no
+cambia; lo que cambia es lo que cuesta.
 
-**Decisión.** Recalcular el P95 sobre la tokenización efectiva en §4.2, y reportar la tasa
-de truncamiento resultante.
+**Decisión.** Se conserva `MAX_LEN = 150` sin recalcular. Lo que se añade en esta entrega no
+es un nuevo percentil, sino **medir el costo real de esa longitud bajo atención** en la
+Sección 11: en una LSTM el costo crece linealmente con la longitud; en la atención crece con
+su **cuadrado**, porque cada token mira a todos los demás.
 
-**Por qué importa más aquí que allá.** En una LSTM el costo crece linealmente con la
-longitud; en la atención crece con su **cuadrado**, porque cada token mira a todos los
-demás. Reutilizar 150 truncaría más de lo previsto; fijar 2.048 como el guía multiplicaría
-el cómputo de la matriz de atención por dos órdenes de magnitud para llenarla de padding.
-`MAX_LEN` es, en este notebook, la perilla que más pesa en el presupuesto de tiempo.
+**Por qué importa.** Fijar 2.048 como hace el guía —sin derivarlo de nada— multiplicaría el
+cómputo de la matriz de atención por dos órdenes de magnitud frente al P95 real, casi todo
+gastado en padding. La Sección 11 hace visible ese costo con una curva de tiempo y memoria
+frente a `MAX_LEN` ∈ {64, 128, 256, 512}, marcando dónde caen tanto el 150 heredado como el
+2.048 del guía. `MAX_LEN` sigue siendo la perilla que más pesa en el presupuesto de tiempo;
+lo nuevo es que ahora se mide en lugar de solo declararse.
 
 ---
 
-## D-207 · Conservar la submuestra, el Split A y las métricas del Miniproyecto 1
+## D-207 · Conservar la submuestra, el Split A, el vocabulario y las métricas del
+Miniproyecto 1
 
-**Estado:** aceptada · 2026-09-12
+**Estado:** revisada · 2026-09-12 → ampliada 2026-09-15 (D-214 suma el tokenizador y el
+vocabulario a lo que se hereda).
 
 **Contexto.** La Sección 13 compara los modelos de las dos entregas en una sola tabla. Eso
-solo es legítimo si se midieron sobre exactamente los mismos datos.
+solo es legítimo si se midieron sobre datos comparables. Con la reversión de D-203, «datos
+comparables» pasa de «mismo split» a «mismo split **y mismo vocabulario**».
 
-**Decisión.** Submuestra estratificada por `Polarity` de 40.000 registros con `SEED = 42`,
-Split A 80/10/10 estratificado, y la misma función `evaluar(...)` con las mismas seis
-métricas. Se verifica imprimiendo la distribución de clases de las tres particiones y
-comprobando que los baselines reproducen los valores del Miniproyecto 1 (accuracy 0.6565,
-macro-F1 0.1585).
+**Decisión.** Se heredan del Miniproyecto 1, tal cual: la submuestra estratificada por
+`Polarity` de 40.000 registros con `SEED = 42`, el Split A 80/10/10 estratificado, el
+tokenizador por palabras y el vocabulario de 30.000 tokens construido **solo** sobre el
+train de ese split, y la función `evaluar(...)` con las mismas seis métricas. Se verifica
+imprimiendo la distribución de clases de las tres particiones y comprobando que los
+baselines reproducen los valores del Miniproyecto 1 (accuracy 0.6565, macro-F1 0.1585).
 
-**Consecuencias.** Si esa verificación falla, la Sección 13 queda invalidada y hay que
-detenerse antes de seguir. Está escrito como criterio de aceptación en `SPEC.md` §3.3.
+**Lo que NO se puede decir es que «la Sección 13 compara una sola variable».** El optimizador
+(AdamW con warmup y *label smoothing* en vez del `Adam` plano de MP1), el número de épocas y,
+potencialmente, el hardware (D-209) siguen siendo distintos entre las dos entregas. Lo que
+esta decisión logra es más modesto y más defendible: **datos, split, vocabulario y métrica
+dejan de ser variables**; la receta de entrenamiento y el hardware siguen siéndolo, y se
+declaran explícitamente en la tabla de §13 en vez de darse por iguales.
+
+**Consecuencias.** Si la verificación de baselines falla, la Sección 13 queda invalidada y
+hay que detenerse antes de seguir. Está escrito como criterio de aceptación en `SPEC.md` §3.3.
 
 ---
 
@@ -241,7 +254,11 @@ Opcionalmente se puede verificar que la implementación propia coincide numéric
 
 **Contexto.** La Sección 13 incluye una columna de tiempo de entrenamiento para los seis
 modelos. Los tres del Miniproyecto 1 se midieron en una corrida local con GPU RTX 3050
-Laptop (`MP1 docs/EXPERIMENTS.md`). Esta entrega podría ejecutarse en Colab con T4.
+Laptop (`MP1 docs/EXPERIMENTS.md`). Esta entrega se ejecuta en una máquina local con GPU
+RTX 4060 — es decir, **ya sabemos que el hardware difiere**, no es un riesgo hipotético.
+Además, con D-207 ampliada, el optimizador tampoco coincide: MP1 usa `Adam` plano, MP2 usa
+`AdamW` con warmup y *label smoothing*. Los tiempos de las dos entregas nunca van a ser
+directamente comparables, aunque el hardware coincidiera.
 
 **Decisión.** La tabla de §13 lleva una columna de **entorno de medición** por fila. Si los
 entornos difieren, los tiempos heredados se marcan como provenientes de otro hardware y se
@@ -281,10 +298,12 @@ criterio 3 de la rúbrica. Pero la consigna dice que «se valora significativame
 casos que impliquen incluir técnicas más allá de las vistas en clase», y ese criterio
 (Innovación) vale otros 2 puntos. Ciñéndonos solo al paper no habría nada más allá del guía.
 
-**Decisión.** Añadir una sección con cuatro modificaciones posteriores, implementadas sobre
-la misma base: **Pre-LN**, token **`[CLS]`**, ***label smoothing*** y **RoPE**.
+**Decisión.** Añadir una sección con tres modificaciones posteriores, implementadas sobre
+la misma base: **Pre-LN**, token **`[CLS]`** y ***label smoothing***. (RoPE se evaluó y se
+descartó por presupuesto — ver D-216, que la reemplaza por algo que ataca H1 más
+directamente y cuesta menos.)
 
-**Por qué estas cuatro.** No son una lista de novedades: cada una ataca un problema concreto
+**Por qué estas tres.** No son una lista de novedades: cada una ataca un problema concreto
 de la implementación original que el propio notebook expone.
 
 - *Pre-LN* responde a la inestabilidad de gradiente que hace casi obligatorio el warmup de
@@ -293,16 +312,12 @@ de la implementación original que el propio notebook expone.
   de una reseña larga.
 - *Label smoothing* está en el paper (§5.4) y el guía lo omite; sobre una escala ordinal con
   fronteras difusas entre 4★ y 5★ debería notarse en MAE y QWK.
-- *RoPE* es la que más directamente ataca **H1**: la codificación del paper es **absoluta**,
-  y lo que importa para ligar un «no» con su verbo es la posición **relativa**.
 
 **Alternativas descartadas.** *Atención dispersa / Longformer*: resuelven el costo cuadrático
 de §11, pero con `MAX_LEN` ≈ 200 el problema no se manifiesta y la comparación no diría nada.
 *Fine-tuning de BETO*: prohibido por alcance, es la entrega siguiente del curso.
 
-**Consecuencias.** Cuatro corridas más de entrenamiento. RoPE es la más costosa de
-implementar; si el presupuesto aprieta es la última en entrar, y se declara como trabajo
-pendiente en vez de recortarse en silencio.
+**Consecuencias.** Tres corridas más de entrenamiento en vez de cuatro.
 
 ---
 
@@ -351,6 +366,134 @@ de que alguien escriba algo.
 en el `.ipynb`, de modo que el notebook sigue siendo reproducible sin intervención. El widget
 de `ipywidgets` se ofrece como extra opcional. Se declara explícitamente que la evidencia de
 estas pruebas es anecdótica y complementa —no sustituye— las métricas de §7.
+
+---
+
+## D-214 · Vocabulario por palabras heredado de MP1 como base; BPE como variante medida
+
+**Estado:** aceptada · 2026-09-15
+
+**Contexto.** D-203 (2026-09-12) decidió usar BPE como preprocesamiento base, siguiendo el
+notebook de la Sesión 2. Una auditoría posterior contra la consigna, la rúbrica de MP2 y el
+propio EDA del Miniproyecto 1 encontró dos problemas.
+
+**Decisión.** Revertir D-203. La Sección 4 se **copia** del Miniproyecto 1 casi literal:
+mismo tokenizador por palabras, mismo vocabulario de 30.000 tokens (`most_common`, construido
+solo sobre el train de Split A), misma submuestra de 40k, mismo Split A, mismo `MAX_LEN=150`,
+misma función `evaluar(...)`. Lo único que se adapta es el `Dataset` de PyTorch: en MP1
+devuelve `(ids, longitudes, y)` para una LSTM/BiLSTM; en MP2 además construye la
+`attention_mask` que la atención necesita, a partir de esas mismas longitudes.
+
+BPE no desaparece: pasa a ser una **variante de preprocesamiento medida**, junto a las
+ablaciones estructurales de §8, con una sola fila nueva («BPE vs. palabras») en vez de ser
+la base de todo el notebook.
+
+**Por qué se revirtió (las dos razones).**
+
+1. **El argumento de cobertura de D-203 estaba mal calibrado.** Citaba que *"el 26 % de las
+   palabras distintas no tiene vector preentrenado"* (EDA §3.7, cobertura por **tipos**).
+   Pero el propio Miniproyecto 1 ya midió la cifra que de verdad importa para un modelo que
+   lee texto: la cobertura por **apariciones**. Su notebook (celda 64, verificación de §4.2)
+   imprime: *"tokens fuera del vocabulario… 1,5 %"* sobre el test. El vocabulario de 30.000
+   palabras deja fuera solo el 1,5 % de lo que un modelo realmente procesa. El 26 % de tipos
+   sin cubrir son sobre todo nombres propios de baja frecuencia (un hotel mencionado dos
+   veces); el costo real de no tener BPE es marginal, no el problema serio que D-203 asumía.
+2. **BPE como base introducía dos variables a la vez en la Sección 13.** Esa sección compara
+   el Transformer contra los modelos del Miniproyecto 1. Con vocabulario propio y distinto,
+   cualquier diferencia de macro-F1 podía deberse a la tokenización, a la arquitectura, o a
+   una mezcla de ambas, sin forma de separarlas. El «riesgo abierto» que la propia D-203 dejó
+   escrito —*"cambiar de tokenización a la vez que de arquitectura introduce dos
+   variables"*— nunca llegó a resolverse; solo se mitigaba a medias. Revertir la decisión lo
+   resuelve de raíz en vez de mitigarlo.
+
+**Precisión importante (no sobrevender la limpieza del experimento).** Con esta reversión,
+datos, split, vocabulario y métrica dejan de ser variables entre las dos entregas. El
+optimizador (D-204: AdamW+warmup+label smoothing vs. el `Adam` plano de MP1), el número de
+épocas y el hardware (D-209: RTX 4060 vs. RTX 3050) **siguen siendo distintos** y se declaran
+como tales en la tabla de §13. No es correcto afirmar que «la Sección 13 compara una sola
+variable»; sí lo es afirmar que ya no compara tokenizaciones distintas.
+
+**Alternativas descartadas.**
+- *Mantener BPE como base y solo declarar el riesgo en la tabla de §13* (lo que hacía la
+  versión anterior de D-203): descartado porque declarar un problema no lo resuelve, y
+  resolverlo es prácticamente gratis (reutilizar código ya escrito en el Miniproyecto 1).
+- *Entrenar dos Transformers completos, uno con cada tokenizador, como comparación central*:
+  descartado por presupuesto — duplicaría el costo de §6 a §12 para una pregunta que una sola
+  fila adicional en §8 ya responde.
+
+**Consecuencias.** Se elimina la Sección 4.1/4.2 originales (tokenizador BPE, `MAX_LEN`
+recalculado) y se sustituyen por la §4 heredada de MP1 más la adaptación del `Dataset`
+(ver D-206, D-207). Aparece una fila nueva en §8: «BPE vs. palabras», que convierte lo que
+antes era una decisión asumida en una hipótesis medida — coherente con el resto del diseño
+de ablaciones. `requirements.txt` conserva `transformers`/`tokenizers`, ahora solo para esa
+fila y no para todo el notebook.
+
+---
+
+## D-215 · El MLP simple usa embeddings promediados con máscara, no TF-IDF
+
+**Estado:** aceptada · 2026-09-15
+
+**Contexto.** La celda de la §5 (Modelo A) quedó redactada de forma ambigua: *"conteos/TF-IDF
+sobre el vocabulario… o embeddings promediados con máscara"*. Son dos modelos distintos con
+implicaciones distintas, y `SPEC.md` §5 promete que *"la **única** diferencia [con el
+Transformer] es la arquitectura"* — promesa que solo una de las dos opciones cumple.
+
+**Decisión.** El MLP usa la **misma tabla de embeddings aprendibles** que alimentaría a un
+Transformer sin atención (mismo vocabulario de MP1, mismo `emb_dim`), promediados con la
+misma máscara de padding que evita que el relleno contamine el promedio (mismo mecanismo que
+§6.4), seguidos de un par de capas densas.
+
+**Por qué, y no TF-IDF.** TF-IDF es una representación dispersa de conteos ponderados por
+frecuencia inversa de documento: cambia la *representación* del texto, no solo la
+arquitectura del clasificador que la usa. Con TF-IDF, una diferencia de macro-F1 entre el
+MLP y el Transformer se explicaría en parte por la representación (dispersa vs. densa
+aprendida) y en parte por la arquitectura (sin atención vs. con atención), sin poder
+separarlas — el mismo problema que motivó D-214, ahora dentro de la propia Sección 7.
+
+Con embeddings promediados, MLP y Transformer comparten: vocabulario, tokenizador,
+tabla de embeddings inicial, `MAX_LEN`, máscara, partición, ponderación de clases,
+optimizador y bucle de entrenamiento (§6.5). La única diferencia estructural es que el
+Transformer inserta bloques de atención entre los embeddings y el pooling, y el MLP no.
+Eso es exactamente lo que H1 necesita para ser una comparación limpia: si el Transformer
+gana, la explicación disponible es "la atención", no "una mejor representación de entrada".
+
+**Alternativas descartadas.**
+- *TF-IDF + regresión logística*: es el Modelo 1 del Miniproyecto 1 y ya está en la tabla de
+  §13 con sus propios números. Repetirlo como "MLP simple" de esta entrega sería confundir
+  dos comparaciones distintas bajo el mismo nombre.
+- *Bolsa de palabras con conteos crudos + MLP*: mismo problema de fondo que TF-IDF — una
+  representación distinta a la del Transformer — sin la ventaja de que TF-IDF al menos
+  aporta algo evaluado en MP1.
+
+**Consecuencias.** El MLP de §5 es deliberadamente el punto de comparación más estrecho
+posible con el Transformer, no un segundo baseline independiente (ese papel ya lo cumplen
+los baselines de clase mayoritaria y azar de §4.5, y los tres modelos de MP1 en §13).
+
+---
+
+## D-216 · El Transformer se entrena con ambos vocabularios; RoPE se descarta
+
+**Estado:** aceptada · 2026-09-15
+
+**Contexto.** D-214 eligió vocabulario por palabras como base para que §13 compare una sola
+variable (arquitectura) contra los modelos de MP1. Pero eso puede penalizar al Transformer:
+la tokenización subword suele convenirle más que a una LSTM, y si pierde contra MP1 no se
+sabría si es la arquitectura o un preprocesamiento subóptimo.
+
+**Decisión.** El Transformer (§6) se entrena **dos veces**: una con el vocabulario por
+palabras heredado de MP1 (la que alimenta la tabla de §13, comparación limpia con MP1) y otra
+con BPE (su preprocesamiento natural, en §8/§9). Ninguna de las dos tablas se sobrevende como
+"la" respuesta; cada una responde una pregunta distinta y se leen juntas.
+
+Para mantener el presupuesto, se retira **RoPE** de las variantes posteriores al paper
+(D-211). RoPE era la más cara de implementar y medir; la doble tokenización cubre el mismo
+tipo de pregunta ("¿el diseño original le está poniendo el listón bajo al Transformer?") a
+menor costo, y sin ella siguen quedando tres variantes propias (Pre-LN, `[CLS]`, label
+smoothing) más las ablaciones estructurales — de sobra para el criterio de Innovación.
+
+**Consecuencias.** Una corrida de entrenamiento más para el Transformer (con BPE), a cambio
+de una menos (RoPE). El presupuesto total no cambia significativamente.
 
 ---
 
