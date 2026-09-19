@@ -614,6 +614,28 @@ mismo, un hallazgo honesto sobre qué tan robusta es la conclusión.
 
 ---
 
+## D-220 · Limpieza de comentarios de andamiaje huérfanos (§5-§9)
+
+**Estado:** aceptada · 2026-09-19
+
+**Contexto.** `CLAUDE.md` §5 prohíbe dejar comentarios de andamiaje (`<!-- LEER -->`,
+`<!-- REDACTAR -->`) en el entregable final. Al redactar las lecturas de §10-§17 se encontró
+que cuatro celdas de las Secciones 5-9 —ya completadas por los compañeros— conservaban un
+placeholder `<!-- LEER: ... -->` **inmediatamente después** de la celda que ya respondía esa
+misma pregunta (ej.: la celda 73 ya interpreta la matriz de confusión del MLP, y la 74 seguía
+preguntando "¿qué clases abandona primero?" sin texto real).
+
+**Decisión.** Eliminar las cuatro celdas huérfanas (no editarlas: no aportaban nada que la
+celda anterior no dijera ya). No se tocó ninguna celda dentro del bloque heredado
+(`cells[13:55]`), donde placeholders equivalentes sí forman parte de la copia byte a byte de
+MP1 y deben permanecer (ver §D-201, §D-217).
+
+**Consecuencias.** El notebook pasa de 128 a 124 celdas. Se reconfirmó con
+`scripts/verificar_eda_mp1.py` que el bloque heredado sigue intacto (mismo resultado: 39/42
+idénticas).
+
+---
+
 ## Plantilla para nuevas entradas
 
 ```markdown

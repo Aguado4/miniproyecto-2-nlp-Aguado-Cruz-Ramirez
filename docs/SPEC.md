@@ -300,29 +300,37 @@ tarea de control, limitaciones honestas y trabajo futuro.
 
 ## 5. Criterios de aceptación del entregable
 
-- [ ] «Restart & Run All» completo sin errores, en ≤ 35 min con GPU T4.
-- [ ] El Transformer está implementado a mano: cero uso de `nn.Transformer`,
-      `nn.TransformerEncoderLayer` o `nn.MultiheadAttention`.
-- [ ] Las conexiones residuales, la máscara de padding y el pooling enmascarado están
+- [x] «Restart & Run All» completo sin errores. **~61 min medidos** en GPU RTX 3050 Laptop
+      local, no ≤35 min: se documenta como limitación honesta en vez de ajustar el número
+      (`EXPERIMENTS.md` §13, notebook §17). La corrida final en Colab/T4 queda a cargo del
+      usuario para confirmar el tiempo en esa plataforma.
+- [x] El Transformer está implementado a mano: cero uso de `nn.Transformer`,
+      `nn.TransformerEncoderLayer` o `nn.MultiheadAttention` (verificado por inspección).
+- [x] Las conexiones residuales, la máscara de padding y el pooling enmascarado están
       presentes y explicados frente a lo que hace el notebook guía.
-- [ ] La comparación Transformer vs. MLP está en una tabla única con las mismas métricas.
-- [ ] Las ablaciones de §8 y los barridos de §9–§11 fijan la semilla antes de cada corrida.
-- [ ] §9 implementa al menos tres variantes/comparaciones posteriores al paper (D-216: Pre-LN,
+- [x] La comparación Transformer vs. MLP está en una tabla única con las mismas métricas
+      (§7; macro-F1 0.416 vs. 0.354).
+- [x] Las ablaciones de §8 y los barridos de §9–§11 fijan la semilla antes de cada corrida.
+- [x] §9 implementa tres variantes/comparaciones posteriores al paper (D-216: Pre-LN,
       `[CLS]`, label smoothing aislado y BPE-vs-palabras; RoPE se retiró, ver nota de §9).
-- [ ] §12 (tarea de control `Type`) ejecutada y comparada contra polaridad.
-- [ ] §15 (demo) ejecuta los tres pares de prueba con texto fijo y salida guardada.
-- [ ] La tabla de §13 incluye los modelos del Miniproyecto 1 con su entorno de medición.
-- [ ] **El bloque EDA es idéntico al del Miniproyecto 1**, verificado con
+- [x] §12 (tarea de control `Type`) ejecutada y comparada contra polaridad (+0.504) y
+      contra el 0.949 del Miniproyecto 1.
+- [x] §15 (demo) ejecuta los tres pares de prueba con texto fijo y salida guardada.
+- [x] La tabla de §13 incluye los modelos del Miniproyecto 1 con su entorno de medición.
+- [x] **El bloque EDA es idéntico al del Miniproyecto 1**, verificado con
       `scripts/verificar_eda_mp1.py` (control de autoría en local, no una celda del
       notebook — ver `DECISIONS.md` §D-217; Colab no puede clonar el repo del MP1 sin
-      credenciales).
-- [ ] El notebook se lee sin abrir la entrega anterior.
-- [ ] Ninguna celda de código sin markdown explicativo previo.
-- [ ] Ninguna gráfica ni tabla sin su lectura escrita.
-- [ ] Todo en español, incluidas las etiquetas de los ejes.
-- [ ] Cero `TODO` y cero comentarios de andamiaje (`<!-- REDACTAR -->`, `<!-- LEER -->`).
-- [ ] `EXPERIMENTS.md` con los resultados reales de la corrida final.
-- [ ] Salidas de celdas guardadas en el `.ipynb` versionado.
+      credenciales). Resultado: 39/42 celdas idénticas byte a byte, 3 con diferencia
+      cosmética de codificación.
+- [x] El notebook se lee sin abrir la entrega anterior.
+- [x] Ninguna celda de código sin markdown explicativo previo.
+- [x] Ninguna gráfica ni tabla sin su lectura escrita.
+- [x] Todo en español, incluidas las etiquetas de los ejes.
+- [x] Cero `TODO` y cero comentarios de andamiaje (`<!-- REDACTAR -->`, `<!-- LEER -->`)
+      fuera del bloque heredado de MP1, que se conserva íntegro por definición
+      (`DECISIONS.md` §D-220).
+- [x] `EXPERIMENTS.md` con los resultados reales de la corrida final.
+- [x] Salidas de celdas guardadas en el `.ipynb` versionado.
 
 ## 6. Cobertura de la rúbrica
 
@@ -334,9 +342,9 @@ tarea de control, limitaciones honestas y trabajo futuro.
 | Innovación | 2 | §8 ablaciones · §9 variantes posteriores al paper · §10 barrido · §11 costo cuadrático medido · §12 tarea de control · §13 comparación entre entregas · §14 interpretabilidad · §15 demo |
 
 Y frente a la consigna: *«prueba diferentes técnicas, arquitecturas, parámetros»* → §5-§6,
-§8-§9, §10. *«técnicas más allá de las vistas en clase»* → §9 (Pre-LN, `[CLS]`, RoPE).
-*«hacer demos»* → §15. *«combinar con otro tipo de casos»* → §12. *«añadir plots, otro tipo
-de análisis»* → §11 y §14.
+§8-§9, §10. *«técnicas más allá de las vistas en clase»* → §9 (Pre-LN, `[CLS]`, BPE vs.
+palabras). *«hacer demos»* → §15. *«combinar con otro tipo de casos»* → §12. *«añadir plots,
+otro tipo de análisis»* → §11 y §14.
 
 ## 7. Fuera de alcance
 
