@@ -250,15 +250,24 @@ Opcionalmente se puede verificar que la implementación propia coincide numéric
 
 ## D-209 · Los tiempos entre entregas solo se comparan si el hardware coincide
 
-**Estado:** aceptada · 2026-09-12
+**Estado:** aceptada · 2026-09-12 → **corregida 2026-09-19** (ver nota al final)
 
 **Contexto.** La Sección 13 incluye una columna de tiempo de entrenamiento para los seis
 modelos. Los tres del Miniproyecto 1 se midieron en una corrida local con GPU RTX 3050
-Laptop (`MP1 docs/EXPERIMENTS.md`). Esta entrega se ejecuta en una máquina local con GPU
-RTX 4060 — es decir, **ya sabemos que el hardware difiere**, no es un riesgo hipotético.
-Además, con D-207 ampliada, el optimizador tampoco coincide: MP1 usa `Adam` plano, MP2 usa
-`AdamW` con warmup y *label smoothing*. Los tiempos de las dos entregas nunca van a ser
-directamente comparables, aunque el hardware coincidiera.
+Laptop (`MP1 docs/EXPERIMENTS.md`). Esta entrega se planeó para ejecutarse en una máquina
+local con GPU RTX 4060 — es decir, se asumía que el hardware difería, no como riesgo
+hipotético sino como hecho conocido de antemano. Además, con D-207 ampliada, el optimizador
+tampoco coincide: MP1 usa `Adam` plano, MP2 usa `AdamW` con warmup y *label smoothing*. Los
+tiempos de las dos entregas nunca van a ser directamente comparables, aunque el hardware
+coincidiera.
+
+**Nota de corrección (2026-09-19).** La corrida de referencia final de esta entrega se
+ejecutó en una máquina distinta a la prevista, con GPU **RTX 3050 Laptop — la misma tarjeta
+que usó el Miniproyecto 1**, no la RTX 4060 que esta entrada asumía. Es una mejora accidental
+para la Sección 13: con el mismo split, mismo vocabulario (D-207/D-214) y ahora el mismo
+hardware, la única variable de hardware que queda declarada en la tabla es el optimizador
+(`Adam` vs. `AdamW`+warmup+label smoothing), no la GPU. La columna de entorno de §13 se
+mantiene de todos modos, por si una corrida futura sí cambia de máquina.
 
 **Decisión.** La tabla de §13 lleva una columna de **entorno de medición** por fila. Si los
 entornos difieren, los tiempos heredados se marcan como provenientes de otro hardware y se
@@ -494,6 +503,114 @@ smoothing) más las ablaciones estructurales — de sobra para el criterio de In
 
 **Consecuencias.** Una corrida de entrenamiento más para el Transformer (con BPE), a cambio
 de una menos (RoPE). El presupuesto total no cambia significativamente.
+
+---
+
+## D-217 · Verificación de identidad del bloque EDA: script, no celda del notebook
+
+**Estado:** aceptada · 2026-09-19
+
+**Contexto.** `SPEC.md` §5 exige una "verificación programática" de que las 42 celdas
+heredadas (Secciones 2-3) son idénticas a las del Miniproyecto 1. Al auditar el repositorio
+para continuar esta entrega desde la Sección 10, esa verificación no existía en ningún lado
+—ni como celda del notebook, ni como script separado— pese a que la documentación daba por
+hecho que sí.
+
+**Decisión.** Se añade `scripts/verificar_eda_mp1.py`, un script de repositorio (no una
+celda del `.ipynb`) que compara `mp1.cells[12:54]` contra `mp2.cells[13:55]` fuente por
+fuente y reporta cualquier diferencia.
+
+**Por qué un script y no una celda.** El notebook debe ejecutarse de forma autocontenida en
+Colab (`CLAUDE.md` §4), pero el Miniproyecto 1 vive en **otro repositorio privado**
+(`miniproyecto-1-nlp-Aguado-Cruz-Ramirez`) que Colab no tiene forma de clonar sin
+credenciales. Una celda que intentara esta comparación en tiempo de ejecución, o bien
+fallaría en Colab, o bien tendría que comparar contra un hash precalculado y congelado
+—lo cual solo verificaría que el propio notebook no cambió, no que coincide con el original.
+Un script de repositorio, corrido en local antes de cada commit por quien tiene ambos
+repositorios clonados, es la verificación honesta que la garantía requiere.
+
+**Resultado de la corrida (2026-09-19).** 39 de 42 celdas son idénticas byte a byte. Las 3
+restantes (índices relativos 6, 24 y 40 del bloque; celdas `MP2[19]`, `MP2[37]`, `MP2[53]`)
+difieren únicamente en la codificación del guión largo `—`, sustituido por una coma o un
+guión corto en algún paso de copiado. No hay cambios de código, cifras, gráficas ni
+conclusiones. Se documenta como diferencia conocida y aceptada; el script la señala en su
+nota final para que cualquier diferencia *nueva* se trate como regresión real. No se
+corrigieron esas 3 celdas porque están dentro del bloque que el profesor pidió no alterar
+(`CLAUDE.md` §1: "no se modifican"); la celda puente antes de la Sección 2 (fuera del bloque
+heredado) documenta este resultado para el lector.
+
+**Consecuencias.** `SPEC.md` §5 se actualiza para referenciar el script en vez de dar por
+supuesta una verificación que no existía. `docs/PLAN.md` registra la tarea como cerrada.
+
+---
+
+## D-218 · Bug corregido en `pesos_de_clase`: ignoraba `n_clases`
+
+**Estado:** aceptada · 2026-09-19
+
+**Contexto.** La primera corrida completa del notebook falló en la Sección 12 (tarea de
+control `Type`) con `RuntimeError: weight tensor should be defined either for all 3 classes
+or no classes but got weight tensor of shape: [5]`. `pesos_de_clase(indices, n_clases=5)`
+calculaba siempre `np.bincount(y_idx[indices], minlength=n_clases)` — pero `y_idx` es la
+polaridad (valores 0-4), así que `bincount` devuelve un arreglo de longitud 5 sin importar
+qué `n_clases` se pida, porque `minlength` es un mínimo, no un tope. Con `n_clases=3` para
+`Type`, la función igual devolvía un tensor de tamaño 5, que `CrossEntropyLoss` rechaza
+contra una salida de 3 clases.
+
+**Decisión.** Añadir un parámetro `etiquetas` a `pesos_de_clase` (por defecto `y_idx`, para
+no romper ninguna llamada existente) y pasarle explícitamente `y_type_idx` en la Sección 12.
+
+**Por qué no se detectó antes.** Todas las llamadas anteriores a la Sección 12 usan el valor
+por defecto (`n_clases=5`) sobre la polaridad, donde el bug es invisible: `bincount` sobre
+`y_idx` con `minlength=5` da longitud 5 de todos modos. Es la primera vez que el notebook
+pesa una tarea con un número de clases distinto de 5.
+
+**Consecuencias.** Ninguna cifra de las Secciones 1-11 cambia (no usan `n_clases≠5`). Se
+repitió la corrida de referencia completa desde el principio (Restart & Run All), tanto por
+higiene de reproducibilidad como porque `nbconvert --execute` no conserva salidas de una
+corrida que termina en error.
+
+---
+
+## D-219 · El veredicto de H2 depende de la corrida: se documenta, no se oculta
+
+**Estado:** aceptada · 2026-09-19
+
+**Contexto.** La primera versión de la lectura de la Sección 8 (escrita durante el
+scaffolding, antes de esta sesión) concluía que quitar la señal posicional del Transformer
+hundía el macro-F1 "prácticamente al mismo nivel que el MLP", confirmando H2. Esa lectura se
+escribió sobre una corrida anterior, en otra máquina. La corrida de referencia final de esta
+entrega —la que reproduce «Restart & Run All» con el código tal como quedó versionado—
+da un resultado distinto:
+
+| Variante | macro-F1 |
+|---|---|
+| Transformer completo (con posicional) | 0.3595 |
+| Transformer sin señal posicional (control H2) | 0.3624 |
+| MLP (referencia de H2) | 0.3545 |
+
+Quitar la posición no colapsa el modelo hacia el MLP: el macro-F1 se queda prácticamente
+igual (incluso levemente mejor) y sigue claramente por encima del MLP. **El veredicto se
+invierte: en esta corrida, H2 no se sostiene.**
+
+**Decisión.** Se reescribe la lectura de §8 con el veredicto de la corrida versionada (la
+única que "Restart & Run All" puede reproducir), y se documenta aquí la discrepancia en vez
+de promediar, descartar o esconder una de las dos corridas.
+
+**Por qué se trata como varianza y no como error.** Los baselines, el F1 por clase, y el
+resto de las cinco filas de la propia tabla de ablaciones (residuales, `Flatten`, *label
+smoothing*, *pooling* sin máscara) coinciden en dirección y magnitud entre ambas corridas —
+solo cambia la fila de la señal posicional. `SEED=42` fija la semilla de Python/NumPy/PyTorch,
+pero PyTorch no garantiza resultados bit-a-bit idénticos entre versiones de CUDA/cuDNN o
+hardware distintos (documentado por el propio proyecto PyTorch); con solo 5 épocas y una
+ablación que ya de por sí es una configuración límite (el modelo se sostiene por encima del
+MLP con o sin posición), un resultado tan cercano entre las dos variantes es exactamente el
+tipo de comparación que puede voltearse por esa varianza.
+
+**Consecuencias.** El notebook reporta el resultado que realmente reproduce. La Sección 17
+(conclusiones) construye el veredicto de H2 sobre esta corrida, con la advertencia explícita
+de que una repetición en otro entorno podría no reproducirlo exactamente — que es, en sí
+mismo, un hallazgo honesto sobre qué tan robusta es la conclusión.
 
 ---
 

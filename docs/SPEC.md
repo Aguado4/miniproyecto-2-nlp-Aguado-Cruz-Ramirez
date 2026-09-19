@@ -132,13 +132,20 @@ la entrega anterior.
 
 ### Sección 4 — Preprocesamiento y protocolo
 
-| # | Contenido | Aceptación |
+> **Nota (D-214, 2026-09-15):** esta sección se revirtió después de escrita esta tabla.
+> El tokenizador base ya **no** es BPE: se heredó tal cual el vocabulario por palabras del
+> Miniproyecto 1, para que la Sección 13 compare una sola variable (arquitectura) contra
+> aquella entrega. BPE no desapareció — pasó a ser una variante de preprocesamiento medida
+> en §8 («BPE vs. palabras», D-216), no la base de todo el notebook. La tabla original queda
+> tachada por trazabilidad; la columna «Vigente» dice qué aplica hoy.
+
+| # | Contenido (versión original, 2026-09-12) | Vigente |
 |---|---|---|
-| 4.1 | Tokenizador BPE entrenado **solo sobre train** | Se reporta tamaño de vocabulario, tasa de `[UNK]` y un ejemplo ida y vuelta |
-| 4.2 | `MAX_LEN` = P95 **en tokens BPE**, no reutilizado de §3.4 | Se reporta la tasa de truncamiento |
-| 4.3 | Submuestra 40k y Split A idénticos al Miniproyecto 1 | Se imprime la distribución de clases de las tres particiones |
-| 4.4 | `Dataset` y `DataLoader` con `input_ids`, `attention_mask`, `y` | — |
-| 4.5 | Función única `evaluar(...)` + baselines | Los baselines reproducen los del Miniproyecto 1 |
+| ~~4.1~~ | ~~Tokenizador BPE entrenado solo sobre train~~ | Tokenizador y vocabulario por palabras **heredados del Miniproyecto 1** (`most_common`, 30.000 tokens, solo train de Split A) |
+| ~~4.2~~ | ~~`MAX_LEN` = P95 en tokens BPE~~ | `MAX_LEN = 150` **heredado sin recalcular** (D-206); BPE se mide aparte en §8 |
+| 4.3 | Submuestra 40k y Split A idénticos al Miniproyecto 1 | Vigente sin cambios. Se imprime la distribución de clases de las tres particiones |
+| 4.4 | `Dataset` y `DataLoader` con `input_ids`/`ids`, `attention_mask`/máscara, `y` | Vigente sin cambios |
+| 4.5 | Función única `evaluar(...)` + baselines | Vigente sin cambios. Los baselines reproducen los del Miniproyecto 1 |
 
 ### Sección 5 — Modelo A: MLP simple
 
@@ -195,19 +202,22 @@ explicación.
 
 ### Sección 9 — Más allá del paper (aporte propio)
 
-Cuatro variantes posteriores a 2017, ninguna presente en el notebook de la sesión:
+> **Nota (D-216, 2026-09-15):** RoPE se retiró de esta sección por presupuesto y se
+> reemplazó por una pregunta que ataca el mismo tipo de duda a menor costo — si el
+> vocabulario por palabras (elegido en D-214 para comparar limpio con el Miniproyecto 1) le
+> pone el listón bajo al Transformer frente a su preprocesamiento natural. Quedan tres
+> variantes propias más la comparación de tokenización.
 
 | Variante | Qué cambia | Motivación |
 |---|---|---|
 | **Pre-LN** | `x + Sublayer(LayerNorm(x))` | Estabilidad de gradiente en capas altas; tolera tasas mayores (Xiong et al., 2020) |
 | **Token `[CLS]`** | Token dedicado en vez de promediar | El promedio diluye una queja breve dentro de una reseña larga |
-| ***Label smoothing*** | Reparte masa fuera de la etiqueta | Está en el paper (§5.4) y el guía lo omite; debería notarse en MAE y QWK |
-| **RoPE** | Rotación de q/k por posición | Codifica posición **relativa**, que es lo que importa para ligar un «no» con su verbo (Su et al., 2021) |
+| ***Label smoothing*** (aislado) | Reparte masa fuera de la etiqueta | Está en el paper (§5.4) y el guía lo omite; debería notarse en MAE y QWK |
+| **BPE vs. palabras** (D-216, reemplaza a RoPE) | Mismo Transformer, entrenado con el tokenizador BPE de §8 en vez del vocabulario por palabras | ¿El preprocesamiento heredado de MP1 perjudica al Transformer frente a su tokenización natural? |
 
 **Aceptación:** cada variante se compara contra el modelo base de §6 con la misma
-configuración reducida de §8. RoPE es la más ambiciosa y la que ataca H1 más directamente;
-si el presupuesto aprieta, es la última en implementarse. Se advierte que muchas de estas
-mejoras se diseñaron para regímenes de datos y profundidad muy distintos del nuestro.
+configuración reducida de §8. Se advierte que muchas de estas mejoras se diseñaron para
+regímenes de datos y profundidad muy distintos del nuestro.
 
 ### Sección 10 — Barrido de hiperparámetros
 
@@ -297,11 +307,15 @@ tarea de control, limitaciones honestas y trabajo futuro.
       presentes y explicados frente a lo que hace el notebook guía.
 - [ ] La comparación Transformer vs. MLP está en una tabla única con las mismas métricas.
 - [ ] Las ablaciones de §8 y los barridos de §9–§11 fijan la semilla antes de cada corrida.
-- [ ] §9 implementa al menos tres de las cuatro variantes posteriores al paper.
+- [ ] §9 implementa al menos tres variantes/comparaciones posteriores al paper (D-216: Pre-LN,
+      `[CLS]`, label smoothing aislado y BPE-vs-palabras; RoPE se retiró, ver nota de §9).
 - [ ] §12 (tarea de control `Type`) ejecutada y comparada contra polaridad.
 - [ ] §15 (demo) ejecuta los tres pares de prueba con texto fijo y salida guardada.
 - [ ] La tabla de §13 incluye los modelos del Miniproyecto 1 con su entorno de medición.
-- [ ] **El bloque EDA es idéntico al del Miniproyecto 1** (verificación programática).
+- [ ] **El bloque EDA es idéntico al del Miniproyecto 1**, verificado con
+      `scripts/verificar_eda_mp1.py` (control de autoría en local, no una celda del
+      notebook — ver `DECISIONS.md` §D-217; Colab no puede clonar el repo del MP1 sin
+      credenciales).
 - [ ] El notebook se lee sin abrir la entrega anterior.
 - [ ] Ninguna celda de código sin markdown explicativo previo.
 - [ ] Ninguna gráfica ni tabla sin su lectura escrita.
