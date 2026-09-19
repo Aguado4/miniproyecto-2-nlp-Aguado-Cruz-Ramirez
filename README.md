@@ -101,27 +101,46 @@ Ficha completa: [`docs/DATASET.md`](docs/DATASET.md).
 
 ## Resultados
 
-> Pendiente de la corrida de referencia. Los resultados completos irán en
-> [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
-
-Punto de partida heredado del Miniproyecto 1, sobre esta misma submuestra y este mismo split:
+Corrida de referencia completa (`Restart & Run All`, sin errores, GPU RTX 3050 Laptop —
+la misma máquina que el Miniproyecto 1). Detalle completo con todas las métricas,
+ablaciones, barridos e interpretabilidad en
+[`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
 
 | Modelo | Entrega | macro-F1 | Accuracy | MAE | QWK |
 |---|---|---:|---:|---:|---:|
 | Baseline (clase mayoritaria) | — | 0.159 | 0.657 | 0.549 | 0.000 |
+| **BiLSTM + atención** | MP1 | **0.527** | 0.676 | 0.362 | 0.755 |
 | TF-IDF + Regresión Logística | MP1 | 0.524 | 0.679 | 0.376 | 0.726 |
-| LSTM desde cero | MP1 | 0.295 | 0.576 | 0.651 | 0.355 |
 | BiLSTM + spaCy (afinada) | MP1 | 0.486 | 0.636 | 0.431 | 0.694 |
-| BiLSTM + atención | MP1 | 0.527 | 0.676 | 0.362 | 0.755 |
-| MLP simple | MP2 | — | — | — | — |
-| Transformer desde cero | MP2 | — | — | — | — |
+| Transformer desde cero | MP2 | 0.416 | 0.586 | 0.605 | 0.507 |
+| MLP simple | MP2 | 0.354 | 0.527 | 0.886 | 0.350 |
+| LSTM desde cero | MP1 | 0.295 | 0.576 | 0.651 | 0.355 |
 
-Vale la pena registrar la expectativa antes de medir: en el Miniproyecto 1, TF-IDF resultó
-sorprendentemente difícil de superar y solo la BiLSTM con atención lo consiguió. Con 32.000
-reseñas de entrenamiento, un Transformer desde cero parte en desventaja — los transformers
-son, como advierte el propio notebook guía, hambrientos de datos. Si eso se confirma, la
-conclusión interesante no será «el Transformer pierde» sino **qué haría falta para que
-ganara**, que es justo lo que viene después en el curso.
+Se confirmó la expectativa que se registró antes de medir: con 32.000 reseñas de
+entrenamiento, el Transformer desde cero queda **cuarto de seis**, por debajo de los tres
+modelos "clásicos" del Miniproyecto 1. Sí supera claramente al MLP propio en las seis
+métricas (la comparación que exige la rúbrica), y en la tarea de control `Type` (balanceada,
+no ordinal) casi iguala a la mejor BiLSTM de MP1 (0.920 vs. 0.949) — la brecha se abre
+específicamente en la tarea difícil, no por incapacidad general del modelo.
+
+Sobre las dos hipótesis de investigación (`docs/SPEC.md` §1.2):
+
+- **H1** (el Transformer gana sobre todo en clases negativas, por la negación): **parcial**.
+  La mejora sobre el MLP es proporcionalmente mayor en 1★ (+38%) y 2★ (+105%) que en el
+  resto, y hay 362 reseñas con negación donde el MLP falla y el Transformer acierta. Pero la
+  cuantificación de atención no encuentra que el modelo ligue la negación con su término más
+  de lo que lo haría por azar — la ventaja parece venir de mezclar contexto en general, no de
+  un mecanismo de negación tan preciso como se planteaba.
+- **H2** (sin señal posicional, cae al nivel del MLP): **no se sostiene** en esta corrida. El
+  Transformer sin posición mantiene casi todo su rendimiento — documentado junto con la
+  discrepancia frente a una corrida anterior en `docs/DECISIONS.md` §D-219.
+
+La conclusión no es "el Transformer pierde": es qué haría falta para que ganara. El barrido
+de hiperparámetros y el costo cuadrático medido en §10-§11 del notebook dan pistas concretas
+(una tasa de aprendizaje mayor ayudó más que más profundidad; el costo de la atención crece
+con el cuadrado de la longitud mientras el macro-F1 satura mucho antes), y las conclusiones
+del notebook (§17) apuntan a lo que viene después en el curso: partir de un modelo
+preentrenado en español.
 
 ## Cómo ejecutarlo
 
