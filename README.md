@@ -47,7 +47,7 @@ mitad de las secciones no existirían.
 | §5–§6 | MLP simple y Transformer desde cero, mismo split y mismo bucle de entrenamiento |
 | §7 | La comparación que pide la rúbrica, con F1 por clase y matrices de confusión |
 | §8 | **Ablaciones estructurales**: sin residuales, `Flatten`, sin máscara, sin posicional |
-| §9 | **Más allá del paper**: Pre-LN, token `[CLS]`, *label smoothing*, RoPE |
+| §9 | **Más allá del paper**: Pre-LN, token `[CLS]`, *label smoothing* aislado, BPE vs. vocabulario por palabras |
 | §10 | **Barrido de hiperparámetros**, incluida la tasa `2e-5` del notebook guía |
 | §11 | **El costo cuadrático de la atención, medido** (tiempo y memoria frente a `MAX_LEN`) |
 | §12 | **Tarea de control**: la misma arquitectura prediciendo `Type` (balanceado, no ordinal) |
@@ -88,9 +88,14 @@ es un descuido: corregirlas habría significado no entregar el mismo EDA. Dos **
 puente**, fuera del bloque heredado, avisan de ello y retraducen cada hallazgo a la sección
 de esta entrega donde se aplica.
 
-Lo que sí cambia respecto de la entrega anterior es la tokenización: **BPE** en lugar de
-vocabulario por palabras, porque el propio EDA (§3.7) mostró que el 26 % de los tipos —
-nombres de destinos, variantes con y sin tilde — colapsaría en `[UNK]`.
+La tokenización, en cambio, **se hereda tal cual** del Miniproyecto 1: mismo vocabulario por
+palabras de 30.000 tokens. Una primera versión de este trabajo planeó usar BPE como base,
+razonando que el EDA (§3.7) mostró que el 26 % de los *tipos* de palabra no tiene vector
+preentrenado; pero esa cifra es cobertura por tipos, y la que de verdad importa —por
+apariciones— ya estaba medida en el propio Miniproyecto 1 en 98,5 %. Usar BPE como base
+además mezclaría dos variables (tokenización y arquitectura) en la comparación de la
+Sección 13. La decisión se revirtió (`docs/DECISIONS.md` §D-214): BPE se conserva como una
+variante de preprocesamiento *medida*, no como la base del notebook.
 
 Ficha completa: [`docs/DATASET.md`](docs/DATASET.md).
 

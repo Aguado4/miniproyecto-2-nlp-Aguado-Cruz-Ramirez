@@ -20,9 +20,10 @@ huggingface-hub>=0.23
 # ni nn.MultiheadAttention). Ver docs/DECISIONS.md §D-208.
 torch>=2.2
 
-# --- Tokenizador BPE (sección 4.1) ---
-# Se usan SOLO para entrenar el tokenizador subword, siguiendo el notebook de la Sesión 2.
-# Ninguna capa del modelo sale de aquí.
+# --- Tokenizador BPE (variante medida en las secciones 8-9, D-214/D-216) ---
+# El tokenizador base del notebook es el vocabulario por palabras heredado del
+# Miniproyecto 1 (sección 4). BPE se usa solo para la fila "BPE vs. palabras".
+# Ninguna capa del modelo sale de transformers/tokenizers.
 transformers>=4.41
 tokenizers>=0.19
 
